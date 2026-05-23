@@ -1,3 +1,43 @@
+# Messaging bot (Telegram + WhatsApp) — Local starter
+
+This is a minimal local starter that demonstrates how to queue messages for user approval and send them via Telegram Bot API and Twilio WhatsApp.
+
+Getting started
+
+1. Create and activate a Python virtualenv.
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+2. Copy `.env.example` to `.env` and fill in your credentials, including `GEMINI_API_KEY` if you want AI response generation.
+
+3. Run the app:
+
+```bash
+python app.py
+```
+
+4. Expose via ngrok for webhooks (optional):
+
+```bash
+ngrok http 5000
+```
+
+API endpoints
+
+- `POST /queue` — queue a message for approval. JSON: `{ "platform":"telegram|whatsapp", "to":"<recipient>", "body":"message text" }`
+- `GET /pending` — list pending messages
+- `POST /approve` — approve and send: `{ "id": "<message-id>" }`
+- `POST /webhook/telegram` — Telegram webhook receiver (demo)
+- `POST /webhook/whatsapp` — Twilio webhook receiver (demo)
+
+Notes and next steps
+
+- This is a demo scaffold for local testing. Add persistence, authentication, templates, rate limiting, and audit logs before using in production.
+- WhatsApp via Twilio requires a sandbox or approved WhatsApp Business account.
 # 🎭 The Agency: AI Specialists Ready to Transform Your Workflow
 
 > **A complete AI agency at your fingertips** - From frontend wizards to Reddit community ninjas, from whimsy injectors to reality checkers. Each agent is a specialized expert with personality, processes, and proven deliverables.
