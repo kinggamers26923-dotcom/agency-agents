@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>JARVIS Control Center</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #060b17;
+        --panel: rgba(12, 20, 40, 0.94);
+        --panel-strong: rgba(8, 13, 28, 0.98);
+        --border: rgba(88, 177, 255, 0.15);
+        --text-muted: #8aa7c1;
+        --accent: #4f9dff;
+        --accent-strong: #7cc4ff;
+      }
+      body {
+        background: radial-gradient(circle at top right, rgba(35, 107, 255, 0.14), transparent 18%),
+                    radial-gradient(circle at 10% 20%, rgba(0, 255, 215, 0.06), transparent 20%),
+                    linear-gradient(180deg, #07101f 0%, #02040d 100%);
+        color: #e9f4ff;
+        min-height: 100vh;
+        font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      .page-header {
+        border: 1px solid rgba(255,255,255,0.06);
+        background: rgba(9, 18, 36, 0.88);
+        backdrop-filter: blur(16px);
+        border-radius: 1.5rem;
+      }
+      .dashboard-card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 1.5rem;
+        box-shadow: 0 30px 80px rgba(0,0,0,0.28);
+      }
+      .dashboard-card-soft {
+        background: rgba(10, 23, 44, 0.93);
+        border: 1px solid rgba(255,255,255,0.04);
+      }
+      .section-title {
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        color: var(--accent-strong);
+      }
+      .btn-jarvis {
+        background: linear-gradient(135deg, #3d8bff, #70c7ff);
+        border: none;
+        color: #fff;
+        box-shadow: 0 18px 40px rgba(48, 147, 255, 0.18);
+      }
+      .btn-jarvis-outline {
+        color: #7cc4ff;
+        border-color: rgba(124, 196, 255, 0.28);
+        background: transparent;
+      }
+      .voice-panel {
+        background: radial-gradient(circle at 50% 20%, rgba(79, 157, 255, 0.18), transparent 38%);
+        border: 1px dashed rgba(79, 157, 255, 0.4);
+      }
+      .voice-button {
+        width: 90px;
+        height: 90px;
+        border-radius: 50%;
+        background: linear-gradient(180deg, #3d8bff 0%, #1765cb 100%);
+        border: 2px solid rgba(255,255,255,0.16);
+        color: #fff;
+        font-size: 1.8rem;
+      }
+      .voice-button.listening {
+        animation: pulse 1.4s ease-in-out infinite;
+      }
+      @keyframes pulse {
+        0%,100% { box-shadow: 0 0 0 0 rgba(124,196,255,0.28); }
+        50% { box-shadow: 0 0 0 20px rgba(124,196,255,0.06); }
+      }
+      .input-surface {
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.08);
+        color: #f4f9ff;
+      }
+      textarea, input.form-control {
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.08);
+        color: #fff;
+      }
+      textarea::placeholder, input::placeholder {
+        color: rgba(255,255,255,0.55);
+      }
+      .table {
+        color: #dfefff;
+      }
+      .table thead th {
+        border-bottom-color: rgba(255,255,255,0.08);
+      }
+      .table tbody tr:hover {
+        background: rgba(255,255,255,0.04);
+      }
+      pre {
+        background: rgba(255,255,255,0.03);
+        color: #e7f5ff;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container-fluid px-4 py-4">
+      <div class="page-header p-4 mb-4 row align-items-center gx-4">
+        <div class="col-lg-8">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <span class="badge rounded-pill bg-primary bg-opacity-90 px-3 py-2">JARVIS</span>
+            <span class="text-uppercase text-muted small">Control center</span>
+          </div>
+          <h1 class="display-6 fw-semibold">Voice-first desktop automation for your AI assistant.</h1>
+          <p class="text-muted mb-0">Use voice commands first, type text only when you want a second option. Jarvis can search files, open apps, send messaging drafts, and ask for permission before sending.</p>
+        </div>
+        <div class="col-lg-4 text-lg-end">
+          <div class="text-muted small mb-2">Local mode</div>
+          <div class="d-inline-flex align-items-center gap-2 px-3 py-2 rounded-4" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);">
+            <span class="badge rounded-pill bg-success bg-opacity-20 text-success">Online</span>
+            <div>127.0.0.1:5000</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row gx-4 gy-4">
+        <div class="col-xl-4">
+          <div class="dashboard-card p-4 voice-panel mb-4">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+              <div>
+                <div class="section-title">Voice command</div>
+                <h2 class="h5 mt-2">Speak to Jarvis</h2>
+              </div>
+              <button id="voice-btn" type="button" class="voice-button d-flex align-items-center justify-content-center" title="Start voice listening">🎙</button>
+            </div>
+            <div class="mb-3">
+              <div id="voice-status" class="text-muted small">Press the mic and speak your task aloud.</div>
+              <div id="voice-note" class="text-muted small mt-2"></div>
+            </div>
+            <div class="input-surface rounded-4 p-3 mb-3">
+              <div class="text-white-50 small mb-2">Current voice command</div>
+              <div id="voice-text" style="min-height: 70px; white-space: pre-wrap;">Say something like: "Find YouTube files" or "Send file C:\Users\...\video.mp4 to telegram 12345".</div>
+            </div>
+            <div class="small text-muted">If your browser doesn't support voice recognition, use the command box on the right as a fallback.</div>
+          </div>
+
+          <div class="dashboard-card p-4 dashboard-card-soft">
+            <div class="section-title">Quick actions</div>
+            <h2 class="h6 mt-3 mb-3 text-white">Supported commands</h2>
+            <ul class="list-unstyled text-muted small">
+              <li>• find youtube files</li>
+              <li>• search file youtube</li>
+              <li>• open youtube.com</li>
+              <li>• open file C:\\Users\\...\\example.mp4</li>
+              <li>• send file C:\\path\\file.mp4 to telegram 12345</li>
+            </ul>
+            <div class="mt-4">
+              <div class="section-title">Status cards</div>
+              <div class="row g-3 mt-2" id="status-cards"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-xl-8">
+          <div class="row gx-4 gy-4">
+            <div class="col-md-6">
+              <div class="dashboard-card p-4">
+                <div class="section-title">AI draft</div>
+                <h2 class="h5 mt-2">Create a reply</h2>
+                <p class="text-muted">Ask Jarvis to draft a Telegram or WhatsApp response for you.</p>
+                <form id="draft-form">
+                  <div class="mb-3">
+                    <label class="form-label text-white-50">Platform</label>
+                    <select class="form-select input-surface" id="draft-platform">
+                      <option value="telegram">Telegram</option>
+                      <option value="whatsapp">WhatsApp</option>
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label text-white-50">Recipient ID / Phone</label>
+                    <input class="form-control input-surface" id="draft-sender" placeholder="e.g. 1234567890 or Telegram chat ID" />
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label text-white-50">User message</label>
+                    <textarea class="form-control input-surface" id="draft-body" rows="4" placeholder="Example: 'Hi, any update on my order?'" spellcheck="true"></textarea>
+                  </div>
+                  <button type="submit" class="btn btn-jarvis w-100">Create AI Draft</button>
+                </form>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="dashboard-card p-4">
+                <div class="section-title">Direct send</div>
+                <h2 class="h5 mt-2">Queue message</h2>
+                <p class="text-muted">Send a message directly into the approval queue.</p>
+                <form id="queue-form">
+                  <div class="mb-3">
+                    <label class="form-label text-white-50">Platform</label>
+                    <select class="form-select input-surface" id="queue-platform">
+                      <option value="telegram">Telegram</option>
+                      <option value="whatsapp">WhatsApp</option>
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label text-white-50">Recipient ID / Phone</label>
+                    <input class="form-control input-surface" id="queue-to" placeholder="e.g. 1234567890 or Telegram chat ID" />
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label text-white-50">Message text</label>
+                    <textarea class="form-control input-surface" id="queue-body" rows="4" placeholder="Write your message"></textarea>
+                  </div>
+                  <button type="submit" class="btn btn-jarvis-outline w-100">Queue for Approval</button>
+                </form>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <div class="dashboard-card p-4">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3">
+                  <div>
+                    <div class="section-title">Manual command</div>
+                    <h2 class="h5 mt-2 mb-1">Type or edit Jarvis commands</h2>
+                    <p class="text-muted mb-0">If voice is not available, type your task here, then run it.</p>
+                  </div>
+                  <button id="refresh-button" class="btn btn-jarvis btn-sm mt-3 mt-md-0">Refresh status</button>
+                </div>
+                <form id="command-form">
+                  <div class="mb-3">
+                    <textarea class="form-control input-surface" id="command-text" rows="4" placeholder="Try: find youtube files on my computer"></textarea>
+                  </div>
+                  <button type="submit" class="btn btn-jarvis w-100">Run Jarvis Command</button>
+                </form>
+                <div class="mt-4">
+                  <div class="section-title mb-2">Jarvis output</div>
+                  <pre id="command-output" class="p-3 rounded-4" style="min-height: 140px; background: rgba(255,255,255,0.04);">No command run yet.</pre>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <div class="dashboard-card p-4">
+                <div class="section-title">Pending approvals</div>
+                <h2 class="h5 mt-2">Review and send</h2>
+                <p class="text-muted mb-3">Approve drafts before they leave your system.</p>
+                <div class="table-responsive">
+                  <table class="table table-borderless text-white align-middle">
+                    <thead>
+                      <tr class="text-muted small text-uppercase">
+                        <th>Platform</th>
+                        <th>Recipient</th>
+                        <th>Message</th>
+                        <th>Draft</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="pending-list"></tbody>
+                  </table>
+                </div>
+                <div id="feedback" class="mt-3"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const feedbackEl = document.getElementById('feedback');
+      const pendingList = document.getElementById('pending-list');
+      const statusCards = document.getElementById('status-cards');
+      const commandOutput = document.getElementById('command-output');
+      const voiceBtn = document.getElementById('voice-btn');
+      const voiceStatus = document.getElementById('voice-status');
+      const voiceNote = document.getElementById('voice-note');
+      const voiceText = document.getElementById('voice-text');
+      const commandInput = document.getElementById('command-text');
+      const commandForm = document.getElementById('command-form');
+      const draftInput = document.getElementById('draft-body');
+
+      let recognizer = null;
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        recognizer = new SpeechRecognition();
+        recognizer.lang = 'en-US';
+        recognizer.interimResults = false;
+        recognizer.maxAlternatives = 1;
+
+        recognizer.addEventListener('start', () => {
+          voiceBtn.classList.add('listening');
+          voiceStatus.textContent = 'Listening... speak now.';
+        });
+
+        recognizer.addEventListener('result', event => {
+          const transcript = event.results[0][0].transcript;
+          voiceText.textContent = transcript;
+          commandInput.value = transcript;
+          voiceStatus.textContent = 'Command captured and running...';
+          voiceBtn.classList.remove('listening');
+          runCommandText(transcript);
+        });
+
+        recognizer.addEventListener('error', event => {
+          voiceStatus.textContent = 'Voice recognition error: ' + event.error;
+          voiceBtn.classList.remove('listening');
+        });
+
+        recognizer.addEventListener('end', () => {
+          voiceBtn.classList.remove('listening');
+          if (voiceStatus.textContent === 'Listening... speak now.') {
+            voiceStatus.textContent = 'Voice recording ended.';
+          }
+        });
+      } else {
+        voiceNote.textContent = 'Your browser does not support voice recognition. Use typed command as fallback.';
+        voiceBtn.disabled = true;
+      }
+
+      voiceBtn.addEventListener('click', async () => {
+        if (!recognizer) {
+          voiceStatus.textContent = 'Voice recognition is not available in this browser.';
+          console.warn('SpeechRecognition API not supported');
+          return;
+        }
+
+        voiceStatus.textContent = 'Requesting microphone permission...';
+        console.log('Voice button clicked, attempting to start recognition');
+        
+        try {
+          console.log('SpeechRecognition supported:', !!recognizer);
+          console.log('Calling recognizer.start()...');
+          recognizer.start();
+        } catch (err) {
+          console.error('Speech recognition error:', err);
+          if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+            voiceStatus.textContent = 'Microphone access denied. This may be a browser security issue on HTTP. Try: 1) Use HTTPS, 2) Check browser permissions, 3) Use typed commands instead.';
+          } else if (err.name === 'NotFoundError') {
+            voiceStatus.textContent = 'No microphone found. Connect a mic and retry.';
+          } else {
+            voiceStatus.textContent = 'Unable to start voice recognition: ' + (err.message || err.name || 'unknown error');
+          }
+          voiceBtn.classList.remove('listening');
+        }
+      });
+
+      function showFeedback(message, type = 'success') {
+        feedbackEl.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show" role="alert">${message}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>`;
+      }
+
+      async function runCommandText(commandText) {
+        const trimmed = commandText?.trim();
+        if (!trimmed) {
+          showFeedback('No command available to run.', 'warning');
+          return;
+        }
+
+        commandInput.value = trimmed;
+        const res = await fetch('/api/command', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({command: trimmed})
+        });
+        const payload = await res.json();
+        commandOutput.textContent = payload.message || 'Jarvis could not complete the command.';
+        if (payload.files && Array.isArray(payload.files)) {
+          commandOutput.textContent += '\n' + payload.files.join('\n');
+        }
+
+        if (res.ok && payload.success) {
+          showFeedback('Jarvis command executed.', 'success');
+        } else if (payload.action === 'suggest_ai_draft') {
+          // Suggest AI draft for general questions
+          draftInput.focus();
+          draftInput.value = trimmed;
+          showFeedback(payload.message || 'Use the Draft feature to ask Jarvis questions.', 'info');
+        } else {
+          showFeedback(payload.message || 'Jarvis command failed.', 'danger');
+        }
+      }
+
+      async function refreshPending() {
+        const [pendingRes, statusRes] = await Promise.all([fetch('/pending'), fetch('/api/status')]);
+        const pending = await pendingRes.json();
+        const status = await statusRes.json();
+
+        statusCards.innerHTML = `
+          <div class="col-12">
+            <div class="p-3 rounded-4" style="background: rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08)">
+              <div class="small text-muted">Received</div>
+              <div class="h3 mb-0">${status.received_count}</div>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="p-3 rounded-4" style="background: rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08)">
+              <div class="small text-muted">Pending</div>
+              <div class="h3 mb-0">${status.pending_approval_count}</div>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="p-3 rounded-4" style="background: rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08)">
+              <div class="small text-muted">Sent</div>
+              <div class="h3 mb-0">${status.sent_count}</div>
+            </div>
+          </div>
+        `;
+
+        if (!Array.isArray(pending) || pending.length === 0) {
+          pendingList.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No pending messages.</td></tr>';
+          return;
+        }
+
+        pendingList.innerHTML = pending.map(item => `
+          <tr>
+            <td>${item.platform}</td>
+            <td>${item.sender}</td>
+            <td><pre class="mb-0">${item.body}</pre></td>
+            <td><pre class="mb-0">${item.response || 'Pending...'}</pre></td>
+            <td>${item.status}</td>
+            <td><button class="btn btn-sm btn-jarvis" onclick="approveMessage('${item.id}')">Approve</button></td>
+          </tr>
+        `).join('');
+      }
+
+      async function approveMessage(id) {
+        const res = await fetch('/approve', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({id}) });
+        const payload = await res.json();
+        if (res.ok) {
+          showFeedback('Message approved and sent.', 'success');
+          refreshPending();
+        } else {
+          showFeedback(payload.error || 'Approval failed.', 'danger');
+        }
+      }
+
+      document.getElementById('refresh-button').addEventListener('click', refreshPending);
+
+      document.getElementById('draft-form').addEventListener('submit', async event => {
+        event.preventDefault();
+        const platform = document.getElementById('draft-platform').value;
+        const sender = document.getElementById('draft-sender').value.trim() || 'local_user';
+        const body = document.getElementById('draft-body').value.trim();
+        if (!body) { showFeedback('Please enter the user message text.', 'warning'); return; }
+
+        const res = await fetch('/api/draft', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({platform, sender, body}) });
+        const payload = await res.json();
+        if (res.ok) { showFeedback('Draft created. It may take a few seconds for AI to complete.', 'success'); refreshPending(); document.getElementById('draft-body').value = ''; }
+        else { showFeedback(payload.error || 'Failed to create draft.', 'danger'); }
+      });
+
+      document.getElementById('queue-form').addEventListener('submit', async event => {
+        event.preventDefault();
+        const platform = document.getElementById('queue-platform').value;
+        const to = document.getElementById('queue-to').value.trim();
+        const body = document.getElementById('queue-body').value.trim();
+        if (!to || !body) { showFeedback('Recipient and message text are required.', 'warning'); return; }
+
+        const res = await fetch('/queue', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({platform, to, body}) });
+        const payload = await res.json();
+        if (res.ok) { showFeedback('Message queued for approval.', 'success'); refreshPending(); document.getElementById('queue-body').value = ''; }
+        else { showFeedback(payload.error || 'Failed to queue message.', 'danger'); }
+      });
+
+      document.getElementById('command-form').addEventListener('submit', async event => {
+        event.preventDefault();
+        await runCommandText(commandInput.value);
+      });
+
+      refreshPending();
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  </body>
+</html>

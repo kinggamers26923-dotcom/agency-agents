@@ -12,10 +12,10 @@ A small OpenAI-powered assistant app that runs locally and lets you chat with Ja
 
 ## Run
 
-- `npm start` — run the app
-- `npm run dev` — run with `nodemon` for live reload
+- `npm start` — launch the app in development
+- `npm run dev` — start Vite and Electron together
 
-Then open `http://localhost:3000`
+Then open `http://localhost:5173`
 
 ## Gemini setup notes
 
@@ -25,10 +25,8 @@ Then open `http://localhost:3000`
 
 ## How it works
 
-- `server.js` hosts a simple Express backend and serves the UI
-- `/api/jarves` forwards user chat messages to OpenAI
-- `/api/tasks` stores task items in memory
-- Frontend code lives in `public/app.js`
+- Frontend code lives in `src/`
+- The app uses Vite for development and Electron for desktop startup
 
 ## Next steps
 

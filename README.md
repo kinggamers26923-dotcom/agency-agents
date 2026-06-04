@@ -1,6 +1,24 @@
-# Messaging bot (Telegram + WhatsApp) — Local starter
+# Messaging bot (Telegram + WhatsApp) — Local starter with Jarvis Desktop Assistant
 
-This is a minimal local starter that demonstrates how to queue messages for user approval and send them via Telegram Bot API and Twilio WhatsApp.
+This is a minimal local starter that demonstrates how to queue messages for user approval and send them via Telegram Bot API and Twilio WhatsApp. **Now includes Jarvis Desktop Assistant** — a voice-first, non-technical UI for desktop automation and intelligent messaging.
+
+## What is Jarvis?
+
+**Jarvis** is an agency agent (see `specialized/specialized-jarvis-desktop-assistant.md`) that brings voice-first desktop automation to non-technical users:
+
+- 🎙️ **Voice Commands**: Speak instead of type — "find YouTube files", "open youtube.com"
+- 📁 **Smart File Search**: Searches Desktop, Downloads, Documents for matching files
+- 💬 **Message Drafting**: AI-powered replies with approval workflow
+- ✅ **Permission-First**: Never sends messages without explicit approval
+- 🖥️ **Local-First**: All operations run locally, no cloud logging
+
+### How Jarvis Relates to This Repo
+
+- **Agency Agent Definition**: `specialized/specialized-jarvis-desktop-assistant.md` — the official Jarvis agent spec
+- **Flask Implementation**: `app.py`, `services/`, `models.py` — working implementation of Jarvis
+- **Web Dashboard**: `templates/index.html` — dark glassmorphic UI with voice interface
+
+Think of it as: Agency Agent spec + Flask implementation = **Fully operational Jarvis assistant**.
 
 Getting started
 
@@ -20,24 +38,71 @@ pip install -r requirements.txt
 python app.py
 ```
 
-4. Expose via ngrok for webhooks (optional):
+4. Open your browser to `http://localhost:5000` to use the Jarvis dashboard.
+
+5. Expose via ngrok for webhooks (optional):
 
 ```bash
 ngrok http 5000
 ```
 
+## Using Jarvis
+
+### Voice Commands (Recommended)
+1. Click the 🎙️ microphone button on the dashboard
+2. Speak clearly: "Find YouTube files", "Open youtube.com", "Search for reports"
+3. Jarvis executes the command and shows results
+
+**Note**: Voice may not work on HTTP localhost due to browser security. Workarounds:
+- Use HTTPS (ngrok or localhost with SSL)
+- Check browser microphone permissions (lock icon in URL bar)
+- Use **typed commands as fallback** (see below)
+
+### Typed Commands (Fallback)
+1. Type in the "Manual command" box
+2. Click "Run Jarvis Command"
+3. Results appear in the "Jarvis output" panel
+
+### Message Workflow
+1. **Create AI Draft**: Enter user message → Jarvis drafts intelligent response
+2. **Queue Direct**: Write message directly if you prefer not to use AI
+3. **Approve**: Review pending messages in the table
+4. Click **Approve** to send via Telegram or WhatsApp
+
 API endpoints
 
+- `POST /api/command` — execute desktop command (voice or typed). JSON: `{ "command":"find youtube files" }`
+  - Returns: `{ "success": true, "message": "...", "files": [...], "action": "search|open_url|open_file|send_file" }`
+  - **Supported examples**: 
+    - `find youtube files` — search for files containing "youtube"
+    - `search file report` — find files with "report"
+    - `open youtube.com` — open URL in browser
+    - `open file C:\Users\username\video.mp4` — open file with default app
+    - `send file C:\path\file.mp4 to telegram 12345` — upload file to Telegram chat
+
+- `POST /api/draft` — create an AI draft response and queue it for approval. JSON: `{ "platform":"telegram|whatsapp", "sender":"<recipient>", "body":"user message" }`
 - `POST /queue` — queue a message for approval. JSON: `{ "platform":"telegram|whatsapp", "to":"<recipient>", "body":"message text" }`
 - `GET /pending` — list pending messages
 - `POST /approve` — approve and send: `{ "id": "<message-id>" }`
+- `GET /api/status` — get current counts for dashboard status cards
 - `POST /webhook/telegram` — Telegram webhook receiver (demo)
 - `POST /webhook/whatsapp` — Twilio webhook receiver (demo)
+
+Browser dashboard
+
+- Open `http://localhost:5000`
+- Voice command panel with real-time feedback
+- AI draft builder for intelligent replies
+- Pending approvals queue with full message preview
+- Status cards showing Received/Pending/Sent counts
+- Dark glassmorphic UI optimized for desktop use
 
 Notes and next steps
 
 - This is a demo scaffold for local testing. Add persistence, authentication, templates, rate limiting, and audit logs before using in production.
 - WhatsApp via Twilio requires a sandbox or approved WhatsApp Business account.
+- Voice recognition requires HTTPS in production (ngrok or custom SSL) due to browser security policies.
+- Jarvis is designed for non-technical users—all UI feedback is conversational and forgiving.
 # 🎭 The Agency: AI Specialists Ready to Transform Your Workflow
 
 > **A complete AI agency at your fingertips** - From frontend wizards to Reddit community ninjas, from whimsy injectors to reality checkers. Each agent is a specialized expert with personality, processes, and proven deliverables.

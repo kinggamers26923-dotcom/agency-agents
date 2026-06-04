@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jarves Assistant (Standalone)</title>
+  <style>
+    body { margin: 0; font-family: Inter, system-ui, sans-serif; background: #0f172a; color: #e2e8f0; }
+    header { padding: 24px; text-align: center; background: #111827; border-bottom: 1px solid #334155; }
+    h1 { margin: 0; font-size: 2rem; }
+    .container { display: grid; gap: 24px; padding: 24px; max-width: 1080px; margin: 0 auto; }
+    .card { background: #111827; border: 1px solid #334155; border-radius: 16px; padding: 20px; }
+    .task-list { list-style: none; margin: 0; padding: 0; }
+    .task-list li { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid #1f2937; }
+    .task-list li:last-child { border-bottom: none; }
+    button, input, textarea { font: inherit; }
+    input, textarea { width: 100%; border: 1px solid #334155; border-radius: 12px; padding: 12px; background: #0f172a; color: #e2e8f0; }
+    button { cursor: pointer; border: none; border-radius: 12px; padding: 12px 16px; background: #3b82f6; color: white; transition: background .2s ease; }
+    button:hover { background: #2563eb; }
+    .row { display: grid; gap: 12px; }
+    .chat-window { min-height: 320px; max-height: 520px; overflow-y: auto; border: 1px solid #334155; border-radius: 16px; padding: 16px; background: #020617; }
+    .message { margin-bottom: 16px; line-height: 1.6; }
+    .message strong { display: block; margin-bottom: 6px; color: #93c5fd; }
+    .footer { text-align: center; color: #94a3b8; font-size: .95rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Jarves</h1>
+    <p>Your OpenAI-powered assistant for tasks, updates, and code help.</p>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <h2>Chat with Jarves</h2>
+      <div class="chat-window" id="chatWindow"></div>
+      <form id="chatForm" class="row">
+        <textarea id="chatInput" rows="4" placeholder="Ask Jarves for updates, help with code, or task advice..."></textarea>
+        <button type="submit">Send</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Task Board</h2>
+      <form id="taskForm" class="row">
+        <input id="taskTitle" type="text" placeholder="New task title" autocomplete="off" />
+        <button type="submit">Add Task</button>
+      </form>
+      <ul class="task-list" id="taskList"></ul>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Standalone copy of Jarves UI. To connect to your local server, open the developer console and update endpoints if needed.</p>
+  </footer>
+
+  <script>
+  // Inlined app.js (adapted to run standalone against same-origin endpoints)
+  const chatWindow = document.getElementById("chatWindow");
+  const chatForm = document.getElementById("chatForm");
+  const chatInput = document.getElementById("chatInput");
+  const taskForm = document.getElementById("taskForm");
+  const taskTitle = document.getElementById("taskTitle");
+  const taskList = document.getElementById("taskList");
+
+  const renderMessage = (speaker, text) => {
+    const item = document.createElement("div");
+    item.className = "message";
+    item.innerHTML = `<strong>${speaker}</strong><div>${text.replace(/\n/g, "<br />")}</div>`;
+    chatWindow.appendChild(item);
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+  };
+
+  const loadTasks = async () => {
+    try {
+      const response = await fetch("/api/tasks");
+      if (!response.ok) return;
+      const data = await response.json();
+      taskList.innerHTML = "";
+      (data.tasks || []).forEach((task) => {
+        const li = document.createElement("li");
+        li.innerHTML = `<span>${task.title}</span><button data-id="${task.id}">Delete</button>`;
+        taskList.appendChild(li);
+      });
+    } catch (err) {
+      console.warn('Could not load tasks', err);
+    }
+  };
+
+  const addTask = async (title) => {
+    try {
+      const response = await fetch("/api/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title })
+      });
+      if (response.ok) {
+        await loadTasks();
+        taskTitle.value = "";
+      }
+    } catch (err) {
+      console.warn('Add task failed', err);
+    }
+  };
+
+  const deleteTask = async (id) => {
+    try {
+      const response = await fetch(`/api/tasks/${id}`, { method: "DELETE" });
+      if (response.ok) {
+        await loadTasks();
+      }
+    } catch (err) {
+      console.warn('Delete failed', err);
+    }
+  };
+
+  chatForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const text = chatInput.value.trim();
+    if (!text) return;
+    renderMessage("You", text);
+    chatInput.value = "";
+
+    try {
+      const response = await fetch("/api/jarves", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        renderMessage("Jarves", data.reply);
+      } else {
+        renderMessage("Jarves", data.error || "An error occurred.");
+      }
+    } catch (err) {
+      renderMessage("Jarves", "Could not contact server.");
+    }
+  });
+
+  taskForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const title = taskTitle.value.trim();
+    if (!title) return;
+    await addTask(title);
+  });
+
+  taskList.addEventListener("click", async (event) => {
+    if (event.target.tagName === "BUTTON") {
+      const id = event.target.dataset.id;
+      await deleteTask(id);
+    }
+  });
+
+  loadTasks().catch(console.error);
+  </script>
+</body>
+</html>
