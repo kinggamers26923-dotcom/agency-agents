@@ -78,3 +78,7 @@ integrations/qwen/agents/
 integrations/kimi/*/
 !integrations/openclaw/README.md
 !integrations/kimi/README.md
+
+# Environment variables
+.env
+jarves-app/.env
